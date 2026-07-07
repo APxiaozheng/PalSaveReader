@@ -82,5 +82,62 @@ namespace PalSearch.Model
 
             return settings.MassiveEggIncubationTime / modifier;
         }
+
+        public static string GetLocalizedName(this Pal pal, string locale)
+        {
+            if (pal.LocalizedNames != null && pal.LocalizedNames.TryGetValue(locale, out var name))
+                return name;
+            return pal.Name;
+        }
+
+        public static string GetLocalizedName(this PassiveSkill skill, string locale)
+        {
+            if (skill.LocalizedNames != null && skill.LocalizedNames.TryGetValue(locale, out var name))
+                return name;
+            return skill.Name;
+        }
+
+        public static string GetLocalizedName(this ActiveSkill skill, string locale)
+        {
+            if (skill.LocalizedNames != null && skill.LocalizedNames.TryGetValue(locale, out var name))
+                return name;
+            return skill.Name;
+        }
+
+        public static bool MatchesLocalized(this Pal pal, string query)
+        {
+            if (string.IsNullOrEmpty(query)) return true;
+            if (pal.Name.ToLower().Contains(query)) return true;
+            if (pal.LocalizedNames != null)
+            {
+                foreach (var name in pal.LocalizedNames.Values)
+                    if (name.ToLower().Contains(query)) return true;
+            }
+            return false;
+        }
+
+        public static bool MatchesLocalized(this PassiveSkill skill, string query)
+        {
+            if (string.IsNullOrEmpty(query)) return true;
+            if (skill.Name.ToLower().Contains(query)) return true;
+            if (skill.LocalizedNames != null)
+            {
+                foreach (var name in skill.LocalizedNames.Values)
+                    if (name.ToLower().Contains(query)) return true;
+            }
+            return false;
+        }
+
+        public static bool MatchesLocalized(this ActiveSkill skill, string query)
+        {
+            if (string.IsNullOrEmpty(query)) return true;
+            if (skill.Name.ToLower().Contains(query)) return true;
+            if (skill.LocalizedNames != null)
+            {
+                foreach (var name in skill.LocalizedNames.Values)
+                    if (name.ToLower().Contains(query)) return true;
+            }
+            return false;
+        }
     }
 }
