@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
 
@@ -5,7 +6,7 @@ namespace PalSearch.UI.Localization
 {
     public class LocExtension : MarkupExtension
     {
-        public string? Key { get; set; }
+        public string Key { get; set; }
 
         public LocExtension() { }
 

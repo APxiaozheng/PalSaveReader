@@ -35,7 +35,7 @@ namespace PalSearch.UI.Localization
             }
         }
 
-        public static event Action? LocaleChanged;
+        public static event Action LocaleChanged;
 
         public static void Init()
         {
