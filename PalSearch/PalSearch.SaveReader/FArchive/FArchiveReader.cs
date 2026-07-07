@@ -722,7 +722,7 @@ namespace PalSearch.SaveReader.FArchive
             // haven't seen a string larger than 100 chars yet, if we see it there's likely a bug
             if (Math.Abs(size) > 1000)
             {
-                logger.Warning("String size of {size} is abnormal, likely a parsing error which will cause a crash");
+                logger.Warning("String size of {size} is abnormal, likely a parsing error which will cause a crash", size);
 #if DEBUG
                 Debugger.Break();
 #endif
