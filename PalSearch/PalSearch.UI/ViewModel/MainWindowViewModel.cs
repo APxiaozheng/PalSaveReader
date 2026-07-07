@@ -61,6 +61,7 @@ namespace PalSearch.UI.ViewModel
         public IRelayCommand LoadSaveCommand { get; }
         public IRelayCommand SearchItemsCommand { get; }
         public IRelayCommand SearchPalsCommand { get; }
+        public IRelayCommand SwitchLanguageCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -68,6 +69,7 @@ namespace PalSearch.UI.ViewModel
             LoadSaveCommand = new RelayCommand<SaveGameOption>(async (opt) => await LoadSaveData(opt));
             SearchItemsCommand = new RelayCommand(FilterItems);
             SearchPalsCommand = new RelayCommand(FilterPals);
+            SwitchLanguageCommand = new RelayCommand(SwitchLanguage);
         }
 
         public async Task InitializeAsync()
@@ -265,6 +267,13 @@ namespace PalSearch.UI.ViewModel
         partial void OnSelectedLocaleChanged(TranslationLocale value)
         {
             Translator.CurrentLocale = value;
+        }
+
+        private void SwitchLanguage()
+        {
+            var locales = AvailableLocales;
+            var idx = locales.IndexOf(SelectedLocale);
+            SelectedLocale = locales[(idx + 1) % locales.Count];
         }
 
         partial void OnItemSearchTextChanged(string value) => FilterItems();
