@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
 
@@ -5,7 +7,7 @@ namespace PalSearch.UI.Localization
 {
     public class LocExtension : MarkupExtension
     {
-        public string? Key { get; set; }
+        public string Key { get; set; }
 
         public LocExtension() { }
 
@@ -16,9 +18,9 @@ namespace PalSearch.UI.Localization
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
-            var binding = new Binding(nameof(Translator.CurrentLocale))
+            var binding = new Binding(nameof(LocaleBindingSource.CurrentLocale))
             {
-                Source = this,
+                Source = LocaleBindingSource.Instance,
                 Mode = BindingMode.OneWay,
                 Converter = new LocConverter(Key ?? "")
             };
@@ -26,7 +28,7 @@ namespace PalSearch.UI.Localization
             return binding.ProvideValue(serviceProvider);
         }
 
-        private class LocConverter : System.Windows.Data.IValueConverter
+        private class LocConverter : IValueConverter
         {
             private readonly string key;
 
@@ -45,5 +47,20 @@ namespace PalSearch.UI.Localization
                 throw new NotSupportedException();
             }
         }
+    }
+
+    internal class LocaleBindingSource : INotifyPropertyChanged
+    {
+        public static LocaleBindingSource Instance { get; } = new();
+
+        static LocaleBindingSource()
+        {
+            Translator.LocaleChanged += () =>
+                Instance.PropertyChanged?.Invoke(Instance, new PropertyChangedEventArgs(nameof(CurrentLocale)));
+        }
+
+        public TranslationLocale CurrentLocale => Translator.CurrentLocale;
+
+        public event PropertyChangedEventHandler PropertyChanged;
     }
 }

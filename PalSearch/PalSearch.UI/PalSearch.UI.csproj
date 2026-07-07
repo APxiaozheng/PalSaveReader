@@ -43,18 +43,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Localization\Localizations\en.resx" />
-    <EmbeddedResource Include="Localization\Localizations\zh-Hans.resx" />
-    <EmbeddedResource Include="Localization\Localizations\zh-Hant.resx" />
-    <EmbeddedResource Include="Localization\Localizations\ja.resx" />
-    <EmbeddedResource Include="Localization\Localizations\ko.resx" />
-    <EmbeddedResource Include="Localization\Localizations\de.resx" />
-    <EmbeddedResource Include="Localization\Localizations\fr.resx" />
-    <EmbeddedResource Include="Localization\Localizations\es.resx" />
-    <EmbeddedResource Include="Localization\Localizations\ru.resx" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Resource Include="Resources\Map.jpeg" />
     <Resource Include="Resources\T_icon_compass_camp.png" />
   </ItemGroup>

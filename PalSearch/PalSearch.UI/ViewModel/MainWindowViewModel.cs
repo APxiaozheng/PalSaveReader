@@ -20,6 +20,8 @@ namespace PalSearch.UI.ViewModel
         private PalDB db;
         private List<ISavesLocation> savesLocations;
         private Dictionary<string, CachedSaveData> loadedSaves = new();
+        private CachedSaveData currentData;
+        private string CurrentLocaleKey => Translator.CurrentLocale.ToFormalName();
 
         [ObservableProperty] private ObservableCollection<SaveGameOption> saveOptions = new();
         [ObservableProperty] private SaveGameOption selectedSave;
@@ -61,6 +63,7 @@ namespace PalSearch.UI.ViewModel
         public IRelayCommand LoadSaveCommand { get; }
         public IRelayCommand SearchItemsCommand { get; }
         public IRelayCommand SearchPalsCommand { get; }
+        public IRelayCommand SwitchLanguageCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -68,6 +71,7 @@ namespace PalSearch.UI.ViewModel
             LoadSaveCommand = new RelayCommand<SaveGameOption>(async (opt) => await LoadSaveData(opt));
             SearchItemsCommand = new RelayCommand(FilterItems);
             SearchPalsCommand = new RelayCommand(FilterPals);
+            SwitchLanguageCommand = new RelayCommand(SwitchLanguage);
         }
 
         public async Task InitializeAsync()
@@ -138,6 +142,7 @@ namespace PalSearch.UI.ViewModel
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     loadedSaves[option.SaveGame.GameId] = cachedData;
+                    currentData = cachedData;
                     PopulateData(cachedData);
                 });
             });
@@ -181,21 +186,22 @@ namespace PalSearch.UI.ViewModel
 
             // Pals
             AllPals.Clear();
-            foreach (var pal in data.Pals.OrderBy(p => p.Pal?.Name ?? "Unknown"))
+            var locale = CurrentLocaleKey;
+            foreach (var pal in data.Pals.OrderBy(p => p.Pal?.GetLocalizedName(locale) ?? "Unknown"))
             {
                 AllPals.Add(new PalViewModel
                 {
                     InstanceId = pal.InstanceId,
-                    Name = pal.Pal?.Name ?? "Unknown",
+                    Name = pal.Pal?.GetLocalizedName(locale) ?? "Unknown",
                     NickName = pal.NickName,
                     Level = pal.Level,
                     Gender = pal.Gender.ToString(),
                     IV_HP = pal.IV_HP,
                     IV_Attack = pal.IV_Attack,
                     IV_Defense = pal.IV_Defense,
-                    PassiveSkills = string.Join(", ", pal.PassiveSkills?.Select(p => p.Name) ?? []),
-                    ActiveSkills = string.Join(", ", pal.ActiveSkills?.Select(s => s.Name) ?? []),
-                    EquippedActiveSkills = string.Join(", ", pal.EquippedActiveSkills?.Select(s => s.Name) ?? []),
+                    PassiveSkills = string.Join(", ", pal.PassiveSkills?.Select(p => p.GetLocalizedName(locale)) ?? []),
+                    ActiveSkills = string.Join(", ", pal.ActiveSkills?.Select(s => s.GetLocalizedName(locale)) ?? []),
+                    EquippedActiveSkills = string.Join(", ", pal.EquippedActiveSkills?.Select(s => s.GetLocalizedName(locale)) ?? []),
                     Rank = pal.Rank,
                     LocationType = pal.Location?.Type.ToString() ?? "Unknown",
                     LocationIndex = pal.Location?.Index ?? 0,
@@ -265,6 +271,15 @@ namespace PalSearch.UI.ViewModel
         partial void OnSelectedLocaleChanged(TranslationLocale value)
         {
             Translator.CurrentLocale = value;
+            if (currentData != null)
+                PopulateData(currentData);
+        }
+
+        private void SwitchLanguage()
+        {
+            var locales = AvailableLocales;
+            var idx = locales.IndexOf(SelectedLocale);
+            SelectedLocale = locales[(idx + 1) % locales.Count];
         }
 
         partial void OnItemSearchTextChanged(string value) => FilterItems();
