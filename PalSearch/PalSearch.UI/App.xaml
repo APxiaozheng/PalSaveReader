@@ -13,6 +13,8 @@
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <converters:LocaleDisplayConverter x:Key="LocaleDisplayConverter"/>
+            <converters:PercentToWidthConverter x:Key="PercentToWidthConverter"/>
+            <converters:GenderColorConverter x:Key="GenderColorConverter"/>
             
             <!-- Dark Theme Colors -->
             <SolidColorBrush x:Key="BackgroundBrush" Color="#1E1E2E"/>

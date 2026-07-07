@@ -398,6 +398,11 @@ namespace PalSearch.UI.ViewModel
         public int PalboxCol => DisplayCoord?.Col ?? -1;
         public bool HasPalboxPosition => DisplayCoord != null;
 
+        // 星级显示（Rank 0-4 对应 0-4 颗星）
+        public string[] RankStars => Rank > 0
+            ? Enumerable.Range(0, Rank).Select(_ => "\u2B50").ToArray()
+            : Array.Empty<string>();
+
         public string LocationTooltip
         {
             get
