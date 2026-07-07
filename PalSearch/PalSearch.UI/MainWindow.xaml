@@ -367,98 +367,271 @@
                         </Grid>
                     </Border>
 
-                    <!-- Pals DataGrid -->
-                    <DataGrid Grid.Row="1"
+                    <!-- Pals ListView -->
+                    <ListView Grid.Row="1"
                               ItemsSource="{Binding FilteredPals}"
-                              AlternationCount="2"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
                               SelectionMode="Extended"
-                              SelectionUnit="FullRow">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_NAME}" 
-                                                Binding="{Binding Name}" 
-                                                Width="150"/>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_LEVEL}" 
-                                                Binding="{Binding Level}" 
-                                                Width="65">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="{x:Type TextBlock}">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_GENDER}" 
-                                                Binding="{Binding Gender}" 
-                                                Width="70">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="{x:Type TextBlock}">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_IV_HP}" 
-                                                Binding="{Binding IV_HP}" 
-                                                Width="60">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="{x:Type TextBlock}">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_IV_ATTACK}" 
-                                                Binding="{Binding IV_Attack}" 
-                                                Width="70">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="{x:Type TextBlock}">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_IV_DEFENSE}" 
-                                                Binding="{Binding IV_Defense}" 
-                                                Width="70">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="{x:Type TextBlock}">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_PASSIVES}" 
-                                                Binding="{Binding PassiveSkills}" 
-                                                Width="280"/>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_ACTIVE_SKILLS}" 
-                                                Binding="{Binding ActiveSkills}" 
-                                                Width="280"/>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_LOCATION}" 
-                                                Binding="{Binding LocationType}" 
-                                                Width="120"/>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_OWNER}" 
-                                                Binding="{Binding OwnerName}" 
-                                                Width="120"/>
-                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_RANK}" 
-                                                Binding="{Binding Rank}" 
-                                                Width="60">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="{x:Type TextBlock}">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTemplateColumn Width="60">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="&#x1F4CD;" 
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="16"
-                                                   ToolTip="{Binding LocationTooltip}"
-                                                   Cursor="Hand"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                              VirtualizingPanel.ScrollUnit="Pixel"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              Background="Transparent"
+                              BorderThickness="0">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListViewItem}">
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                            <Border x:Name="Bd" 
+                                                    Background="{TemplateBinding Background}" 
+                                                    BorderBrush="{StaticResource BorderBrush}"
+                                                    BorderThickness="0,0,0,1"
+                                                    Padding="8,6">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                    <Setter TargetName="Bd" Property="Opacity" Value="0.15"/>
+                                                </Trigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected" Value="True"/>
+                                                        <Condition Property="Selector.IsSelectionActive" Value="False"/>
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                                                </MultiTrigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="50"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Col 0: Name + Level + Gender -->
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" 
+                                                   FontSize="14" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                            <Border Background="{StaticResource SurfaceBrush}" 
+                                                    CornerRadius="3" Padding="4,1" Margin="0,0,6,0">
+                                                <TextBlock Text="{Binding LevelDisplay}" 
+                                                           FontSize="11"
+                                                           Foreground="{StaticResource AccentBrush}"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding GenderIcon}" 
+                                                       FontSize="13" 
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,8,0"/>
+                                            <Border Background="{StaticResource SurfaceBrush}" 
+                                                    CornerRadius="3" Padding="4,1">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="⭐" FontSize="10" Margin="0,0,2,0"/>
+                                                    <TextBlock Text="{Binding Rank}" FontSize="11"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Col 1: IV Bars -->
+                                    <Grid Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="32"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="32"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- HP -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" 
+                                                   Text="HP" FontSize="10" 
+                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Grid.Row="0" Grid.Column="1" 
+                                                Background="#20FFFFFF" CornerRadius="3" 
+                                                Height="8" Margin="4,0">
+                                            <Border Background="#FF4CAF50" CornerRadius="3" 
+                                                    HorizontalAlignment="Left"
+                                                    Width="{Binding IvHpPercent, Converter={StaticResource PercentToWidthConverter}, ConverterParameter=100}"/>
+                                        </Border>
+                                        <TextBlock Grid.Row="0" Grid.Column="2" 
+                                                   Text="{Binding IV_HP}" FontSize="10"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <!-- ATK -->
+                                        <TextBlock Grid.Row="1" Grid.Column="0" 
+                                                   Text="ATK" FontSize="10" 
+                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Grid.Row="1" Grid.Column="1" 
+                                                Background="#20FFFFFF" CornerRadius="3" 
+                                                Height="8" Margin="4,0">
+                                            <Border Background="#FFFF9800" CornerRadius="3" 
+                                                    HorizontalAlignment="Left"
+                                                    Width="{Binding IvAttackPercent, Converter={StaticResource PercentToWidthConverter}, ConverterParameter=100}"/>
+                                        </Border>
+                                        <TextBlock Grid.Row="1" Grid.Column="2" 
+                                                   Text="{Binding IV_Attack}" FontSize="10"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <!-- DEF -->
+                                        <TextBlock Grid.Row="2" Grid.Column="0" 
+                                                   Text="DEF" FontSize="10" 
+                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Grid.Row="2" Grid.Column="1" 
+                                                Background="#20FFFFFF" CornerRadius="3" 
+                                                Height="8" Margin="4,0">
+                                            <Border Background="#FF2196F3" CornerRadius="3" 
+                                                    HorizontalAlignment="Left"
+                                                    Width="{Binding IvDefensePercent, Converter={StaticResource PercentToWidthConverter}, ConverterParameter=100}"/>
+                                        </Border>
+                                        <TextBlock Grid.Row="2" Grid.Column="2" 
+                                                   Text="{Binding IV_Defense}" FontSize="10"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <!-- Col 2: Passives + Actives -->
+                                    <StackPanel Grid.Column="2" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <ItemsControl ItemsSource="{Binding PassiveList}" Margin="0,0,0,3">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{StaticResource AccentBrush}" 
+                                                            CornerRadius="3" 
+                                                            Padding="4,2" Margin="0,0,4,2">
+                                                        <TextBlock Text="{Binding}" FontSize="10"
+                                                                   Foreground="White"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <ItemsControl ItemsSource="{Binding ActiveSkillList}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{StaticResource SurfaceBrush}" 
+                                                            CornerRadius="3" 
+                                                            Padding="4,2" Margin="0,0,4,2">
+                                                        <TextBlock Text="{Binding}" FontSize="10"
+                                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <!-- Col 3: Owner + Location -->
+                                    <StackPanel Grid.Column="3" 
+                                                VerticalAlignment="Center" 
+                                                Margin="8,0,0,0"
+                                                MinWidth="100">
+                                        <TextBlock Text="{Binding OwnerName}" 
+                                                   FontSize="11" 
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding LocationType}" 
+                                                   FontSize="10" 
+                                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+
+                                    <!-- Col 4: Location Tooltip Button -->
+                                    <Button Grid.Column="4" 
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                            Cursor="Hand">
+                                        <Button.ToolTip>
+                                            <ToolTip>
+                                                <StackPanel>
+                                                    <TextBlock Text="Location Info" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                    <TextBlock>
+                                                        <Run Text="Type: " FontWeight="SemiBold"/>
+                                                        <Run Text="{Binding LocationType}"/>
+                                                    </TextBlock>
+                                                    <TextBlock>
+                                                        <Run Text="Owner: " FontWeight="SemiBold"/>
+                                                        <Run Text="{Binding OwnerName}"/>
+                                                    </TextBlock>
+                                                    <TextBlock>
+                                                        <Run Text="Position: " FontWeight="SemiBold"/>
+                                                        <Run Text="{Binding DisplayCoord}"/>
+                                                    </TextBlock>
+
+                                                    <!-- Palbox Grid -->
+                                                    <Border Margin="0,8,0,0" 
+                                                            BorderBrush="{StaticResource BorderBrush}" 
+                                                            BorderThickness="1"
+                                                            Padding="4"
+                                                            CornerRadius="4"
+                                                            Visibility="{Binding HasPalboxPosition, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Palbox Position" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                                            <TextBlock FontSize="11" Margin="0,0,0,4">
+                                                                <Run Text="Tab: " Foreground="{StaticResource TextMutedBrush}"/>
+                                                                <Run Text="{Binding PalboxTab}"/>
+                                                                <Run Text="  "/>
+                                                                <Run Text="Row: " Foreground="{StaticResource TextMutedBrush}"/>
+                                                                <Run Text="{Binding PalboxRow}"/>
+                                                                <Run Text="  "/>
+                                                                <Run Text="Col: " Foreground="{StaticResource TextMutedBrush}"/>
+                                                                <Run Text="{Binding PalboxCol}"/>
+                                                            </TextBlock>
+                                                            <!-- Mini grid 5x6 -->
+                                                            <Grid Width="150" Height="180">
+                                                                <Grid.Resources>
+                                                                    <Style TargetType="{x:Type Border}">
+                                                                        <Setter Property="BorderBrush" Value="#333333"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                        <Setter Property="Margin" Value="1"/>
+                                                                    </Style>
+                                                                </Grid.Resources>
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                                                                </Grid.RowDefinitions>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition/><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/>
+                                                                </Grid.ColumnDefinitions>
+                                                            </Grid>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </Button.ToolTip>
+                                        <TextBlock Text="&#x1F4CD;" FontSize="18"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                 </Grid>
             </TabItem>
         </TabControl>

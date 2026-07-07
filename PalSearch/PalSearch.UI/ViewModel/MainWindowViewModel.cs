@@ -367,6 +367,37 @@ namespace PalSearch.UI.ViewModel
         public string ContainerId { get; set; }
         public PalDisplayCoord DisplayCoord { get; set; }
 
+        // IV 百分比（0-100 的条形图宽度）
+        public double IvHpPercent => IV_HP / 100.0;
+        public double IvAttackPercent => IV_Attack / 100.0;
+        public double IvDefensePercent => IV_Defense / 100.0;
+
+        // 性别图标
+        public string GenderIcon => Gender switch
+        {
+            "Male" => "♂",
+            "Female" => "♀",
+            _ => "?"
+        };
+
+        // 等级显示
+        public string LevelDisplay => $"Lv.{Level}";
+
+        // 被动技能列表（分割）
+        public string[] PassiveList => string.IsNullOrEmpty(PassiveSkills) 
+            ? Array.Empty<string>() 
+            : PassiveSkills.Split(',').Select(s => s.Trim()).ToArray();
+
+        public string[] ActiveSkillList => string.IsNullOrEmpty(ActiveSkills)
+            ? Array.Empty<string>()
+            : ActiveSkills.Split(',').Select(s => s.Trim()).ToArray();
+
+        // 收纳盒网格数据（用于可视化）
+        public int PalboxTab => DisplayCoord?.Tab ?? -1;
+        public int PalboxRow => DisplayCoord?.Row ?? -1;
+        public int PalboxCol => DisplayCoord?.Col ?? -1;
+        public bool HasPalboxPosition => DisplayCoord != null;
+
         public string LocationTooltip
         {
             get
