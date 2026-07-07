@@ -5,6 +5,7 @@ using PalSearch.SaveReader;
 using PalSearch.SaveReader.SaveFile;
 using PalSearch.UI.Localization;
 using PalSearch.UI.Model;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,6 +18,7 @@ namespace PalSearch.UI.ViewModel
 {
     public partial class MainWindowViewModel : ObservableObject
     {
+        private static ILogger logger = Log.ForContext<MainWindowViewModel>();
         private PalDB db;
         private List<ISavesLocation> savesLocations;
         private Dictionary<string, CachedSaveData> loadedSaves = new();
@@ -120,97 +122,122 @@ namespace PalSearch.UI.ViewModel
             IsLoading = true;
             StatusText = Translator.Get("LC_SAVE_LOADING");
 
-            await Task.Run(() =>
+            try
             {
-                var gameSettings = GameSettings.Defaults;
-                var levelData = option.SaveGame.Level.ReadCharacterData(db, gameSettings, option.SaveGame.Players, option.Location.GlobalPalStorage);
-                var itemData = option.SaveGame.Level.ReadItemData();
-
-                var cachedData = new CachedSaveData
+                await Task.Run(() =>
                 {
-                    Pals = levelData.Pals,
-                    Players = levelData.Players,
-                    Bases = levelData.Bases,
-                    PalContainers = levelData.PalContainers,
-                    Guilds = levelData.Guilds,
-                    Items = itemData
-                };
+                    var gameSettings = GameSettings.Defaults;
+                    var levelData = option.SaveGame.Level.ReadCharacterData(db, gameSettings, option.SaveGame.Players, option.Location.GlobalPalStorage);
+                    var itemData = option.SaveGame.Level.ReadItemData();
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    loadedSaves[option.SaveGame.GameId] = cachedData;
-                    currentData = cachedData;
-                    PopulateData(cachedData);
+                    var cachedData = new CachedSaveData
+                    {
+                        Pals = levelData.Pals,
+                        Players = levelData.Players,
+                        Bases = levelData.Bases,
+                        PalContainers = levelData.PalContainers,
+                        Guilds = levelData.Guilds,
+                        Items = itemData
+                    };
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        loadedSaves[option.SaveGame.GameId] = cachedData;
+                        currentData = cachedData;
+                        PopulateData(cachedData);
+                    });
                 });
-            });
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Failed to load save data");
+                StatusText = $"Error: {ex.Message}";
+            }
 
             IsLoading = false;
-            StatusText = $"Loaded: {option.DisplayName}";
+            if (StatusText == null || !StatusText.StartsWith("Error"))
+                StatusText = $"Loaded: {option.DisplayName}";
         }
 
         private void PopulateData(CachedSaveData data)
         {
-            var locale = CurrentLocaleKey;
-
-            // Items
-            AllItems.Clear();
-            foreach (var item in data.Items.Where(i => i.StackCount > 0)
-                .OrderByDescending(i => i.StackCount))
+            try
             {
-                AllItems.Add(new ItemViewModel
+                var locale = CurrentLocaleKey;
+
+                // Items
+                AllItems.Clear();
+                foreach (var item in data.Items.Where(i => i.StackCount > 0)
+                    .OrderByDescending(i => i.StackCount))
                 {
-                    ItemId = item.ItemId,
-                    Name = item.Name ?? item.ItemId,
-                    StackCount = item.StackCount,
-                    ContainerName = item.Location?.ContainerName ?? "Unknown",
-                    BaseName = item.Location?.BaseName ?? "-",
-                    Coordinates = item.Location?.Position != null 
-                        ? $"({item.Location.Position.X:F0}, {item.Location.Position.Y:F0}, {item.Location.Position.Z:F0})" 
-                        : "-",
-                    ContainerType = item.Location?.ContainerType.ToString() ?? "Unknown",
-                    SlotIndex = item.Location?.SlotIndex ?? 0
-                });
+                    AllItems.Add(new ItemViewModel
+                    {
+                        ItemId = item.ItemId ?? "?",
+                        Name = item.Name ?? item.ItemId ?? "?",
+                        StackCount = item.StackCount,
+                        ContainerName = item.Location?.ContainerName ?? "Unknown",
+                        BaseName = item.Location?.BaseName ?? "-",
+                        Coordinates = item.Location?.Position != null
+                            ? $"({item.Location.Position.X:F0}, {item.Location.Position.Y:F0}, {item.Location.Position.Z:F0})"
+                            : "-",
+                        ContainerType = item.Location?.ContainerType.ToString() ?? "Unknown",
+                        SlotIndex = item.Location?.SlotIndex ?? 0
+                    });
+                }
+
+                TotalItemCount = data.Items.Sum(i => i.StackCount);
+                UniqueItemCount = data.Items.Select(i => i.ItemId).Distinct().Count();
+                FilterItems();
+
+                // Pals
+                AllPals.Clear();
+                var palContainers = data.PalContainers;
+                foreach (var pal in data.Pals.OrderBy(p => p.Pal?.GetLocalizedName(locale) ?? "Unknown"))
+                {
+                    var location = pal.Location;
+                    PalDisplayCoord displayCoord = null;
+                    if (location != null)
+                    {
+                        try { displayCoord = PalDisplayCoord.FromLocation(GameSettings.Defaults, location); }
+                        catch { /* ignore invalid location */ }
+                    }
+
+                    AllPals.Add(new PalViewModel
+                    {
+                        InstanceId = pal.InstanceId ?? "?",
+                        Name = pal.Pal?.GetLocalizedName(locale) ?? "Unknown",
+                        NickName = pal.NickName ?? "",
+                        Level = pal.Level,
+                        Gender = pal.Gender.ToString(),
+                        IV_HP = pal.IV_HP,
+                        IV_Attack = pal.IV_Attack,
+                        IV_Defense = pal.IV_Defense,
+                        PassiveSkills = string.Join(", ", pal.PassiveSkills?.Select(p => p.GetLocalizedName(locale)) ?? []),
+                        ActiveSkills = string.Join(", ", pal.ActiveSkills?.Select(s => s.GetLocalizedName(locale)) ?? []),
+                        EquippedActiveSkills = string.Join(", ", pal.EquippedActiveSkills?.Select(s => s.GetLocalizedName(locale)) ?? []),
+                        Rank = pal.Rank,
+                        LocationType = location?.Type.ToString() ?? "Unknown",
+                        LocationIndex = location?.Index ?? 0,
+                        OwnerName = data.Players.FirstOrDefault(p => p.PlayerId == pal.OwnerPlayerId)?.Name ?? "Unknown",
+                        ContainerId = location?.ContainerId ?? "",
+                        DisplayCoord = displayCoord
+                    });
+                }
+
+                TotalPalCount = data.Pals.Count;
+                UniquePalCount = data.Pals.Select(p => p.Pal?.Name).Distinct().Count();
+                FilterPals();
+
+                logger.Information("Populated {itemCount} items and {palCount} pals", AllItems.Count, AllPals.Count);
             }
-
-            TotalItemCount = data.Items.Sum(i => i.StackCount);
-            UniqueItemCount = data.Items.Select(i => i.ItemId).Distinct().Count();
-            FilterItems();
-
-            // Pals
-            AllPals.Clear();
-            var palContainers = data.PalContainers;
-            foreach (var pal in data.Pals.OrderBy(p => p.Pal?.GetLocalizedName(locale) ?? "Unknown"))
+            catch (Exception ex)
             {
-                var location = pal.Location;
-                var displayCoord = location != null 
-                    ? PalDisplayCoord.FromLocation(GameSettings.Defaults, location) 
-                    : null;
-
-                AllPals.Add(new PalViewModel
-                {
-                    InstanceId = pal.InstanceId,
-                    Name = pal.Pal?.GetLocalizedName(locale) ?? "Unknown",
-                    NickName = pal.NickName,
-                    Level = pal.Level,
-                    Gender = pal.Gender.ToString(),
-                    IV_HP = pal.IV_HP,
-                    IV_Attack = pal.IV_Attack,
-                    IV_Defense = pal.IV_Defense,
-                    PassiveSkills = string.Join(", ", pal.PassiveSkills?.Select(p => p.GetLocalizedName(locale)) ?? []),
-                    ActiveSkills = string.Join(", ", pal.ActiveSkills?.Select(s => s.GetLocalizedName(locale)) ?? []),
-                    EquippedActiveSkills = string.Join(", ", pal.EquippedActiveSkills?.Select(s => s.GetLocalizedName(locale)) ?? []),
-                    Rank = pal.Rank,
-                    LocationType = location?.Type.ToString() ?? "Unknown",
-                    LocationIndex = location?.Index ?? 0,
-                    OwnerName = data.Players.FirstOrDefault(p => p.PlayerId == pal.OwnerPlayerId)?.Name ?? "Unknown",
-                    ContainerId = location?.ContainerId ?? "",
-                    DisplayCoord = displayCoord
-                });
+                logger.Error(ex, "Failed to populate data");
+                AllItems.Clear();
+                AllPals.Clear();
+                FilterItems();
+                FilterPals();
             }
-
-            TotalPalCount = data.Pals.Count;
-            UniquePalCount = data.Pals.Select(p => p.Pal?.Name).Distinct().Count();
-            FilterPals();
         }
 
         private void FilterItems()
