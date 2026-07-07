@@ -161,10 +161,10 @@
                                        VerticalAlignment="Center"
                                        Margin="12,0,0,0"
                                        Foreground="{StaticResource TextSecondaryBrush}">
-                                <Run Text="{loc:Loc Key=LC_STATS_TOTAL_ITEMS, Format='{}{0}'}"/>
+                                <Run Text="{loc:Loc Key=LC_STATS_TOTAL_ITEMS}"/>
                                 <Run Text="{Binding TotalItemCount}"/>
                                 <Run Text=" | "/>
-                                <Run Text="{loc:Loc Key=LC_STATS_UNIQUE_ITEMS, Format='{}{0}'}"/>
+                                <Run Text="{loc:Loc Key=LC_STATS_UNIQUE_ITEMS}"/>
                                 <Run Text="{Binding UniqueItemCount}"/>
                             </TextBlock>
                         </Grid>
@@ -311,10 +311,10 @@
                                            VerticalAlignment="Center"
                                            HorizontalAlignment="Right"
                                            Foreground="{StaticResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Key=LC_STATS_TOTAL_PALS, Format='{}{0}'}"/>
+                                    <Run Text="{loc:Loc Key=LC_STATS_TOTAL_PALS}"/>
                                     <Run Text="{Binding TotalPalCount}"/>
                                     <Run Text=" | "/>
-                                    <Run Text="{loc:Loc Key=LC_STATS_UNIQUE_PALS, Format='{}{0}'}"/>
+                                    <Run Text="{loc:Loc Key=LC_STATS_UNIQUE_PALS}"/>
                                     <Run Text="{Binding UniquePalCount}"/>
                                 </TextBlock>
                             </Grid>
