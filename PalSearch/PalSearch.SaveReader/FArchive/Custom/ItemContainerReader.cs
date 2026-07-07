@@ -45,16 +45,38 @@ namespace PalSearch.SaveReader.FArchive.Custom
                 ContainerId = subReader.ReadGuid(),
             };
 
-            var slotCount = subReader.ReadInt32();
+            int slotCount;
+            try
+            {
+                slotCount = subReader.ReadInt32();
+            }
+            catch (EndOfStreamException ex)
+            {
+                logger.Warning(ex, "ItemContainerReader: failed to read slotCount (end of stream), returning empty container");
+                return new ItemContainerDataProperty
+                {
+                    TypedMeta = meta,
+                    Slots = new()
+                };
+            }
+
             var slots = new List<ItemSlotData>();
             for (int i = 0; i < slotCount; i++)
             {
-                slots.Add(new ItemSlotData
+                try
                 {
-                    SlotIndex = subReader.ReadInt32(),
-                    ItemId = subReader.ReadString(),
-                    StackCount = subReader.ReadInt32()
-                });
+                    slots.Add(new ItemSlotData
+                    {
+                        SlotIndex = subReader.ReadInt32(),
+                        ItemId = subReader.ReadString(),
+                        StackCount = subReader.ReadInt32()
+                    });
+                }
+                catch (Exception ex) when (ex is EndOfStreamException || ex is ArgumentOutOfRangeException)
+                {
+                    logger.Warning(ex, "ItemContainerReader: failed to read slot {i}, stopping iteration", i);
+                    break;
+                }
             }
 
             var result = new ItemContainerDataProperty

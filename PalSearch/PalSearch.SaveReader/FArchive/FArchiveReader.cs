@@ -733,7 +733,7 @@ namespace PalSearch.SaveReader.FArchive
                 {
                     logger.Warning("String size of {size} exceeds remaining bytes {remaining}, truncating", size, remaining);
                     if (size < 0)
-                        size = -(remaining / 2 * 2); // ensure even for UTF-16
+                        size = -(remaining / 2); // UTF-16: chars, not bytes
                     else
                         size = remaining;
                 }
