@@ -1,0 +1,581 @@
+<Window x:Class="PalSearch.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PalSearch.UI.Localization"
+        xmlns:local="clr-namespace:PalSearch.UI"
+        Title="{loc:Loc Key=LC_APP_TITLE}"
+        Height="720" Width="1200"
+        MinHeight="500" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
+        SnapsToDevicePixels="True">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===== Top Bar ===== -->
+        <Border Grid.Row="0" 
+                Background="{StaticResource SurfaceBrush}" 
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- App Title -->
+                <TextBlock Grid.Column="0" 
+                           Text="{loc:Loc Key=LC_APP_TITLE}"
+                           FontSize="16" FontWeight="Bold" 
+                           Foreground="{StaticResource AccentBrush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,16,0"/>
+
+                <!-- Save Selector -->
+                <TextBlock Grid.Column="1" 
+                           Text="{loc:Loc Key=LC_SAVE_SELECT}"
+                           VerticalAlignment="Center" 
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,8,0"/>
+                <ComboBox Grid.Column="2"
+                          ItemsSource="{Binding SaveOptions}"
+                          SelectedItem="{Binding SelectedSave}"
+                          DisplayMemberPath="DisplayName"
+                          MinWidth="200"
+                          MaxWidth="350"
+                          VerticalAlignment="Center"
+                          Margin="0,0,8,0"/>
+
+                <!-- Refresh Button -->
+                <Button Grid.Column="3"
+                        Command="{Binding RefreshSavesCommand}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Padding="12,6">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#x21BB;" FontSize="14" Margin="0,0,6,0"/>
+                        <TextBlock Text="{loc:Loc Key=LC_SAVE_REFRESH}"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Loading Indicator -->
+                <ProgressBar Grid.Column="4"
+                             IsIndeterminate="{Binding IsLoading}"
+                             Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                             Width="120"
+                             VerticalAlignment="Center"
+                             Margin="0,0,8,0"/>
+
+                <!-- Language Selector -->
+                <TextBlock Grid.Column="4" 
+                           Text="{loc:Loc Key=LC_LANGUAGE}"
+                           VerticalAlignment="Center" 
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,8,0"
+                           Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ComboBox Grid.Column="5"
+                          ItemsSource="{Binding AvailableLocales}"
+                          SelectedItem="{Binding SelectedLocale}"
+                          MinWidth="130"
+                          VerticalAlignment="Center"
+                          Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ., Converter={StaticResource LocaleDisplayConverter}}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Grid>
+        </Border>
+
+        <!-- ===== Main Content: TabControl ===== -->
+        <TabControl Grid.Row="1" 
+                    Background="{StaticResource BackgroundBrush}"
+                    BorderThickness="0"
+                    SelectedIndex="{Binding SelectedTabIndex}">
+
+            <!-- ===== Items Tab ===== -->
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="{loc:Loc Key=LC_TAB_ITEMS}" FontSize="13"/>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Items Search Bar -->
+                    <Border Grid.Row="0" 
+                            Background="{StaticResource SurfaceBrush}"
+                            Padding="12,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MaxWidth="400"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding ItemSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalAlignment="Center">
+                                <TextBox.Style>
+                                    <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type TextBox}">
+                                                    <Border Background="{TemplateBinding Background}" 
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="4">
+                                                        <Grid>
+                                                            <TextBlock x:Name="Placeholder"
+                                                                       Text="{loc:Loc Key=LC_SEARCH_PLACEHOLDER}"
+                                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="10,0,0,0"
+                                                                       Visibility="Collapsed"/>
+                                                            <ScrollViewer x:Name="PART_ContentHost" Margin="10,7,10,7"/>
+                                                        </Grid>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="Text" Value="">
+                                                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <TextBlock Grid.Column="1" 
+                                       VerticalAlignment="Center"
+                                       Margin="12,0,0,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}">
+                                <Run Text="{loc:Loc Key=LC_STATS_TOTAL_ITEMS, Format='{0}'}"/>
+                                <Run Text="{Binding TotalItemCount}"/>
+                                <Run Text=" | "/>
+                                <Run Text="{loc:Loc Key=LC_STATS_UNIQUE_ITEMS, Format='{0}'}"/>
+                                <Run Text="{Binding UniqueItemCount}"/>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+
+                    <!-- Items DataGrid -->
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding FilteredItems}"
+                              AlternationCount="2"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              SelectionMode="Extended"
+                              SelectionUnit="FullRow">
+                        <DataGrid.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.ContainerStyle>
+                                    <Style TargetType="{x:Type GroupItem}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                    <StackPanel>
+                                                        <Border Background="{StaticResource SurfaceLightBrush}"
+                                                                Padding="10,6"
+                                                                BorderBrush="{StaticResource BorderBrush}"
+                                                                BorderThickness="0,0,0,1">
+                                                            <TextBlock FontWeight="Bold" 
+                                                                       Foreground="{StaticResource AccentBrush}">
+                                                                <Run Text="&#x25B8; "/>
+                                                                <Run Text="{Binding Name}"/>
+                                                                <Run Text=" ("/>
+                                                                <Run Text="{Binding ItemCount}"/>
+                                                                <Run Text=")"/>
+                                                            </TextBlock>
+                                                        </Border>
+                                                        <ItemsPresenter/>
+                                                    </StackPanel>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </GroupStyle.ContainerStyle>
+                            </GroupStyle>
+                        </DataGrid.GroupStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_ITEM_NAME}" 
+                                                Binding="{Binding Name}" 
+                                                Width="200"/>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_ITEM_COUNT}" 
+                                                Binding="{Binding StackCount}" 
+                                                Width="80">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_ITEM_CONTAINER}" 
+                                                Binding="{Binding ContainerName}" 
+                                                Width="150"/>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_ITEM_BASE}" 
+                                                Binding="{Binding BaseName}" 
+                                                Width="120"/>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_ITEM_COORDINATES}" 
+                                                Binding="{Binding Coordinates}" 
+                                                Width="150"/>
+                            <DataGridTextColumn Header="Container Type" 
+                                                Binding="{Binding ContainerType}" 
+                                                Width="130"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- ===== Pals Tab ===== -->
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="{loc:Loc Key=LC_TAB_PALS}" FontSize="13"/>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Pals Filter Panel -->
+                    <Border Grid.Row="0" 
+                            Background="{StaticResource SurfaceBrush}"
+                            Padding="12,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Row 1: Search + Name Filter + Stats -->
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MaxWidth="300"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*" MaxWidth="200"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding PalSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                         VerticalAlignment="Center">
+                                    <TextBox.Style>
+                                        <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type TextBox}">
+                                                        <Border Background="{TemplateBinding Background}" 
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="4">
+                                                            <Grid>
+                                                                <TextBlock x:Name="Placeholder"
+                                                                           Text="{loc:Loc Key=LC_SEARCH_PLACEHOLDER}"
+                                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="10,0,0,0"
+                                                                           Visibility="Collapsed"/>
+                                                                <ScrollViewer x:Name="PART_ContentHost" Margin="10,7,10,7"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="Text" Value="">
+                                                                <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+
+                                <Separator Grid.Column="1" 
+                                           Style="{StaticResource {x:Type Separator}}" 
+                                           Width="1" Margin="12,4"
+                                           VerticalAlignment="Stretch"/>
+
+                                <TextBlock Grid.Column="3" 
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Right"
+                                           Foreground="{StaticResource TextSecondaryBrush}">
+                                    <Run Text="{loc:Loc Key=LC_STATS_TOTAL_PALS, Format='{0}'}"/>
+                                    <Run Text="{Binding TotalPalCount}"/>
+                                    <Run Text=" | "/>
+                                    <Run Text="{loc:Loc Key=LC_STATS_UNIQUE_PALS, Format='{0}'}"/>
+                                    <Run Text="{Binding UniquePalCount}"/>
+                                </TextBlock>
+                            </Grid>
+
+                            <!-- Row 2: IV Filters + Passive/Active Skill Filters -->
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*" MaxWidth="250"/>
+                                    <ColumnDefinition Width="*" MaxWidth="250"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" 
+                                           Text="IV" 
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,8,0"/>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="{loc:Loc Key=LC_PAL_IV_HP}" 
+                                               VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,0,4,0"/>
+                                    <TextBox Text="{Binding MinIvHp, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="40" VerticalAlignment="Center" 
+                                             TextAlignment="Center"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="{loc:Loc Key=LC_PAL_IV_ATTACK}" 
+                                               VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,0,4,0"/>
+                                    <TextBox Text="{Binding MinIvAttack, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="40" VerticalAlignment="Center" 
+                                             TextAlignment="Center"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="{loc:Loc Key=LC_PAL_IV_DEFENSE}" 
+                                               VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,0,4,0"/>
+                                    <TextBox Text="{Binding MinIvDefense, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="40" VerticalAlignment="Center" 
+                                             TextAlignment="Center"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{loc:Loc Key=LC_PAL_PASSIVES}" 
+                                               VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,0,4,0"/>
+                                    <TextBox Text="{Binding PassiveSearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="180" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{loc:Loc Key=LC_PAL_ACTIVE_SKILLS}" 
+                                               VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,0,4,0"/>
+                                    <TextBox Text="{Binding ActiveSkillSearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="180" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Pals DataGrid -->
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding FilteredPals}"
+                              AlternationCount="2"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              SelectionMode="Extended"
+                              SelectionUnit="FullRow">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_NAME}" 
+                                                Binding="{Binding Name}" 
+                                                Width="150"/>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_LEVEL}" 
+                                                Binding="{Binding Level}" 
+                                                Width="65">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_GENDER}" 
+                                                Binding="{Binding Gender}" 
+                                                Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_IV_HP}" 
+                                                Binding="{Binding IV_HP}" 
+                                                Width="60">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_IV_ATTACK}" 
+                                                Binding="{Binding IV_Attack}" 
+                                                Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_IV_DEFENSE}" 
+                                                Binding="{Binding IV_Defense}" 
+                                                Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_PASSIVES}" 
+                                                Binding="{Binding PassiveSkills}" 
+                                                Width="280"/>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_ACTIVE_SKILLS}" 
+                                                Binding="{Binding ActiveSkills}" 
+                                                Width="280"/>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_LOCATION}" 
+                                                Binding="{Binding LocationType}" 
+                                                Width="120"/>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_OWNER}" 
+                                                Binding="{Binding OwnerName}" 
+                                                Width="120"/>
+                            <DataGridTextColumn Header="{loc:Loc Key=LC_PAL_RANK}" 
+                                                Binding="{Binding Rank}" 
+                                                Width="60">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- ===== Map Tab ===== -->
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="{loc:Loc Key=LC_TAB_MAP}" FontSize="13"/>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Map Controls Bar -->
+                    <Border Grid.Row="0" 
+                            Background="{StaticResource SurfaceBrush}"
+                            Padding="12,8">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{loc:Loc Key=LC_TAB_MAP}" 
+                                       Foreground="{StaticResource AccentBrush}"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,16,0"/>
+                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center">
+                                <Run Text="&#x1F4CD; "/>
+                                <Run Text="{Binding MapMarkers.Count}"/>
+                                <Run Text=" markers"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Map View -->
+                    <Border Grid.Row="1" 
+                            Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            Margin="12"
+                            CornerRadius="4">
+                        <Grid>
+                            <!-- Map Image -->
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                                          VerticalScrollBarVisibility="Auto">
+                                <Grid>
+                                    <!-- Map Image -->
+                                    <Image x:Name="MapImage"
+                                           Source="/Resources/Map.jpeg"
+                                           Stretch="Uniform"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+
+                                    <!-- Marker Overlay Canvas -->
+                                    <Canvas x:Name="MapOverlayCanvas"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top">
+                                        <!-- Markers will be dynamically added here -->
+                                    </Canvas>
+                                </Grid>
+                            </ScrollViewer>
+
+                            <!-- Map Loading / No Data Overlay -->
+                            <Border Background="#AA1E1E2E"
+                                    Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="{loc:Loc Key=LC_SAVE_LOADING}"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               FontSize="16"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- ===== Status Bar ===== -->
+        <Border Grid.Row="2" 
+                Background="{StaticResource StatusBarBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding StatusText}"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center"
+                           FontSize="12"/>
+
+                <TextBlock Grid.Column="1" 
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="11">
+                    <Run Text="PalSearch "/>
+                    <Run Text="{x:Static local:App.Version}"/>
+                </TextBlock>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
