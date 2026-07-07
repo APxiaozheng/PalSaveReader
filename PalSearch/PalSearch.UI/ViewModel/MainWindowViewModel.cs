@@ -76,6 +76,7 @@ namespace PalSearch.UI.ViewModel
 
         public async Task InitializeAsync()
         {
+            Translator.CurrentLocale = SelectedLocale;
             db = PalDB.LoadEmbedded();
             await RefreshSaves();
         }
