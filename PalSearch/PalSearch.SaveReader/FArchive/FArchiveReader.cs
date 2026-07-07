@@ -723,9 +723,20 @@ namespace PalSearch.SaveReader.FArchive
             if (Math.Abs(size) > 1000)
             {
                 logger.Warning("String size of {size} is abnormal, likely a parsing error which will cause a crash", size);
-#if DEBUG
-                Debugger.Break();
-#endif
+            }
+
+            // Clamp size to remaining bytes to prevent ArgumentOutOfRangeException
+            if (reader.BaseStream.CanSeek)
+            {
+                var remaining = (int)(reader.BaseStream.Length - reader.BaseStream.Position);
+                if (Math.Abs(size) > remaining)
+                {
+                    logger.Warning("String size of {size} exceeds remaining bytes {remaining}, truncating", size, remaining);
+                    if (size < 0)
+                        size = -(remaining / 2 * 2); // ensure even for UTF-16
+                    else
+                        size = remaining;
+                }
             }
 
             Encoding encoding;
