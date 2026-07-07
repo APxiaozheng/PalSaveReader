@@ -271,6 +271,12 @@ namespace PalSearch.UI.ViewModel
                 PopulateData(currentData);
         }
 
+        partial void OnSelectedSaveChanged(SaveGameOption value)
+        {
+            if (value != null)
+                _ = LoadSaveData(value);
+        }
+
         private void SwitchLanguage()
         {
             var locales = AvailableLocales;
