@@ -397,7 +397,7 @@
                                 <Track x:Name="PART_Track" IsDirectionReversed="True">
                                     <Track.Thumb>
                                         <Thumb Background="{StaticResource ScrollBarThumbBrush}" 
-                                               CornerRadius="4" Width="6"/>
+                                               Width="6"/>
                                     </Track.Thumb>
                                 </Track>
                             </Border>

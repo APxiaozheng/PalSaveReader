@@ -82,7 +82,7 @@
                            VerticalAlignment="Center" 
                            Foreground="{StaticResource TextSecondaryBrush}"
                            Margin="0,0,8,0"
-                           Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                           Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <ComboBox Grid.Column="5"
                           ItemsSource="{Binding AvailableLocales}"
                           SelectedItem="{Binding SelectedLocale}"
