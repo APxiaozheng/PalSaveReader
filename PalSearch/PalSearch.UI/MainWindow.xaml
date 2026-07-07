@@ -500,7 +500,7 @@
                             <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
                                        VerticalAlignment="Center">
                                 <Run Text="&#x1F4CD; "/>
-                                <Run Text="{Binding MapMarkers.Count}"/>
+                                <Run Text="{Binding MapMarkers.Count, Mode=OneWay}"/>
                                 <Run Text=" markers"/>
                             </TextBlock>
                         </StackPanel>
