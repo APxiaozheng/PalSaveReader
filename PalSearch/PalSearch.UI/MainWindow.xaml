@@ -170,36 +170,6 @@
                               IsReadOnly="True"
                               SelectionMode="Extended"
                               SelectionUnit="FullRow">
-                        <DataGrid.GroupStyle>
-                            <GroupStyle>
-                                <GroupStyle.ContainerStyle>
-                                    <Style TargetType="{x:Type GroupItem}">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="{x:Type GroupItem}">
-                                                    <StackPanel>
-                                                        <Border Background="{StaticResource SurfaceLightBrush}"
-                                                                Padding="10,6"
-                                                                BorderBrush="{StaticResource BorderBrush}"
-                                                                BorderThickness="0,0,0,1">
-                                                            <TextBlock FontWeight="Bold" 
-                                                                       Foreground="{StaticResource AccentBrush}">
-                                                                <Run Text="&#x25B8; "/>
-                                                                <Run Text="{Binding Name}"/>
-                                                                <Run Text=" ("/>
-                                                                <Run Text="{Binding ItemCount}"/>
-                                                                <Run Text=")"/>
-                                                            </TextBlock>
-                                                        </Border>
-                                                        <ItemsPresenter/>
-                                                    </StackPanel>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </GroupStyle.ContainerStyle>
-                            </GroupStyle>
-                        </DataGrid.GroupStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="{loc:Loc Key=LC_ITEM_NAME}" 
                                                 Binding="{Binding Name}" 
@@ -225,6 +195,18 @@
                             <DataGridTextColumn Header="Container Type" 
                                                 Binding="{Binding ContainerType}" 
                                                 Width="130"/>
+                            <DataGridTemplateColumn Width="60">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="&#x1F4CD;" 
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="16"
+                                                   ToolTip="{Binding LocationTooltip}"
+                                                   Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -463,81 +445,20 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
+                            <DataGridTemplateColumn Width="60">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="&#x1F4CD;" 
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="16"
+                                                   ToolTip="{Binding LocationTooltip}"
+                                                   Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-                </Grid>
-            </TabItem>
-
-            <!-- ===== Map Tab ===== -->
-            <TabItem>
-                <TabItem.Header>
-                    <TextBlock Text="{loc:Loc Key=LC_TAB_MAP}" FontSize="13"/>
-                </TabItem.Header>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Map Controls Bar -->
-                    <Border Grid.Row="0" 
-                            Background="{StaticResource SurfaceBrush}"
-                            Padding="12,8">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{loc:Loc Key=LC_TAB_MAP}" 
-                                       Foreground="{StaticResource AccentBrush}"
-                                       FontWeight="SemiBold"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,16,0"/>
-                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
-                                       VerticalAlignment="Center">
-                                <Run Text="&#x1F4CD; "/>
-                                <Run Text="{Binding MapMarkers.Count, Mode=OneWay}"/>
-                                <Run Text=" markers"/>
-                            </TextBlock>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Map View -->
-                    <Border Grid.Row="1" 
-                            Background="{StaticResource SurfaceBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1"
-                            Margin="12"
-                            CornerRadius="4">
-                        <Grid>
-                            <!-- Map Image -->
-                            <ScrollViewer HorizontalScrollBarVisibility="Auto" 
-                                          VerticalScrollBarVisibility="Auto">
-                                <Grid>
-                                    <!-- Map Image -->
-                                    <Image x:Name="MapImage"
-                                           Source="/Resources/Map.jpeg"
-                                           Stretch="Uniform"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-
-                                    <!-- Marker Overlay Canvas -->
-                                    <Canvas x:Name="MapOverlayCanvas"
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="Top">
-                                        <!-- Markers will be dynamically added here -->
-                                    </Canvas>
-                                </Grid>
-                            </ScrollViewer>
-
-                            <!-- Map Loading / No Data Overlay -->
-                            <Border Background="#AA1E1E2E"
-                                    Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="{loc:Loc Key=LC_SAVE_LOADING}"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               FontSize="16"
-                                               HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-                    </Border>
                 </Grid>
             </TabItem>
         </TabControl>

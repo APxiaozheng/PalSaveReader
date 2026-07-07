@@ -50,10 +50,6 @@ namespace PalSearch.UI.ViewModel
         [ObservableProperty] private ObservableCollection<PalViewModel> allPals = new();
         [ObservableProperty] private ObservableCollection<PalViewModel> filteredPals = new();
 
-        // Map
-        [ObservableProperty] private ObservableCollection<MapMarkerViewModel> mapMarkers = new();
-        [ObservableProperty] private MapMarkerViewModel hoveredMarker;
-
         // Localization
         public List<TranslationLocale> AvailableLocales { get; } = Enum.GetValues<TranslationLocale>().ToList();
         [ObservableProperty] private TranslationLocale selectedLocale = TranslationLocale.zhHans;
@@ -154,31 +150,26 @@ namespace PalSearch.UI.ViewModel
 
         private void PopulateData(CachedSaveData data)
         {
+            var locale = CurrentLocaleKey;
+
             // Items
             AllItems.Clear();
-            var itemGroups = data.Items
-                .Where(i => i.StackCount > 0)
-                .GroupBy(i => i.ItemId)
-                .OrderByDescending(g => g.Sum(i => i.StackCount));
-
-            foreach (var group in itemGroups)
+            foreach (var item in data.Items.Where(i => i.StackCount > 0)
+                .OrderByDescending(i => i.StackCount))
             {
-                foreach (var item in group.OrderByDescending(i => i.StackCount))
+                AllItems.Add(new ItemViewModel
                 {
-                    AllItems.Add(new ItemViewModel
-                    {
-                        ItemId = item.ItemId,
-                        Name = item.Name ?? item.ItemId,
-                        StackCount = item.StackCount,
-                        ContainerName = item.Location?.ContainerName ?? "Unknown",
-                        BaseName = item.Location?.BaseName ?? "-",
-                        Coordinates = item.Location?.Position != null 
-                            ? $"({item.Location.Position.X:F0}, {item.Location.Position.Y:F0}, {item.Location.Position.Z:F0})" 
-                            : "-",
-                        ContainerType = item.Location?.ContainerType.ToString() ?? "Unknown",
-                        SlotIndex = item.Location?.SlotIndex ?? 0
-                    });
-                }
+                    ItemId = item.ItemId,
+                    Name = item.Name ?? item.ItemId,
+                    StackCount = item.StackCount,
+                    ContainerName = item.Location?.ContainerName ?? "Unknown",
+                    BaseName = item.Location?.BaseName ?? "-",
+                    Coordinates = item.Location?.Position != null 
+                        ? $"({item.Location.Position.X:F0}, {item.Location.Position.Y:F0}, {item.Location.Position.Z:F0})" 
+                        : "-",
+                    ContainerType = item.Location?.ContainerType.ToString() ?? "Unknown",
+                    SlotIndex = item.Location?.SlotIndex ?? 0
+                });
             }
 
             TotalItemCount = data.Items.Sum(i => i.StackCount);
@@ -187,9 +178,14 @@ namespace PalSearch.UI.ViewModel
 
             // Pals
             AllPals.Clear();
-            var locale = CurrentLocaleKey;
+            var palContainers = data.PalContainers;
             foreach (var pal in data.Pals.OrderBy(p => p.Pal?.GetLocalizedName(locale) ?? "Unknown"))
             {
+                var location = pal.Location;
+                var displayCoord = location != null 
+                    ? PalDisplayCoord.FromLocation(GameSettings.Defaults, location) 
+                    : null;
+
                 AllPals.Add(new PalViewModel
                 {
                     InstanceId = pal.InstanceId,
@@ -204,46 +200,32 @@ namespace PalSearch.UI.ViewModel
                     ActiveSkills = string.Join(", ", pal.ActiveSkills?.Select(s => s.GetLocalizedName(locale)) ?? []),
                     EquippedActiveSkills = string.Join(", ", pal.EquippedActiveSkills?.Select(s => s.GetLocalizedName(locale)) ?? []),
                     Rank = pal.Rank,
-                    LocationType = pal.Location?.Type.ToString() ?? "Unknown",
-                    LocationIndex = pal.Location?.Index ?? 0,
+                    LocationType = location?.Type.ToString() ?? "Unknown",
+                    LocationIndex = location?.Index ?? 0,
                     OwnerName = data.Players.FirstOrDefault(p => p.PlayerId == pal.OwnerPlayerId)?.Name ?? "Unknown",
-                    ContainerId = pal.Location?.ContainerId ?? ""
+                    ContainerId = location?.ContainerId ?? "",
+                    DisplayCoord = displayCoord
                 });
             }
 
             TotalPalCount = data.Pals.Count;
             UniquePalCount = data.Pals.Select(p => p.Pal?.Name).Distinct().Count();
             FilterPals();
-
-            // Map markers
-            MapMarkers.Clear();
-            foreach (var baseInst in data.Bases)
-            {
-                if (baseInst.Position != null)
-                {
-                    MapMarkers.Add(new MapMarkerViewModel
-                    {
-                        Name = $"Base {baseInst.Id}",
-                        X = baseInst.Position.X,
-                        Y = baseInst.Position.Y,
-                        Z = baseInst.Position.Z,
-                        MarkerType = "Base"
-                    });
-                }
-            }
         }
 
         private void FilterItems()
         {
             FilteredItems.Clear();
-            var query = ItemSearchText?.ToLower() ?? "";
+            var query = ItemSearchText?.Trim().ToLower() ?? "";
             foreach (var item in AllItems)
             {
                 if (string.IsNullOrEmpty(query) ||
-                    item.Name.ToLower().Contains(query) ||
-                    item.ItemId.ToLower().Contains(query) ||
-                    item.ContainerName.ToLower().Contains(query) ||
-                    item.BaseName.ToLower().Contains(query))
+                    MatchesFuzzy(item.Name, query) ||
+                    MatchesFuzzy(item.ItemId, query) ||
+                    MatchesFuzzy(item.ContainerName, query) ||
+                    MatchesFuzzy(item.BaseName, query) ||
+                    MatchesFuzzy(item.ContainerType, query) ||
+                    MatchesFuzzy(item.SlotIndex.ToString(), query))
                 {
                     FilteredItems.Add(item);
                 }
@@ -253,20 +235,33 @@ namespace PalSearch.UI.ViewModel
         private void FilterPals()
         {
             FilteredPals.Clear();
-            var query = PalSearchText?.ToLower() ?? "";
-            var passiveQuery = PassiveSearchText?.ToLower() ?? "";
-            var skillQuery = ActiveSkillSearchText?.ToLower() ?? "";
+            var query = PalSearchText?.Trim().ToLower() ?? "";
+            var passiveQuery = PassiveSearchText?.Trim().ToLower() ?? "";
+            var skillQuery = ActiveSkillSearchText?.Trim().ToLower() ?? "";
 
             foreach (var pal in AllPals)
             {
-                bool matchesName = string.IsNullOrEmpty(query) || pal.Name.ToLower().Contains(query) || (pal.NickName?.ToLower().Contains(query) ?? false);
+                bool matchesName = string.IsNullOrEmpty(query) || 
+                    MatchesFuzzy(pal.Name, query) || 
+                    MatchesFuzzy(pal.NickName ?? "", query) ||
+                    MatchesFuzzy(pal.LocationType, query) ||
+                    MatchesFuzzy(pal.OwnerName, query) ||
+                    MatchesFuzzy(pal.Gender, query);
                 bool matchesIv = pal.IV_HP >= MinIvHp && pal.IV_Attack >= MinIvAttack && pal.IV_Defense >= MinIvDefense;
-                bool matchesPassive = string.IsNullOrEmpty(passiveQuery) || pal.PassiveSkills.ToLower().Contains(passiveQuery);
-                bool matchesSkill = string.IsNullOrEmpty(skillQuery) || pal.ActiveSkills.ToLower().Contains(skillQuery) || pal.EquippedActiveSkills.ToLower().Contains(skillQuery);
+                bool matchesPassive = string.IsNullOrEmpty(passiveQuery) || MatchesFuzzy(pal.PassiveSkills, passiveQuery);
+                bool matchesSkill = string.IsNullOrEmpty(skillQuery) || 
+                    MatchesFuzzy(pal.ActiveSkills, skillQuery) || 
+                    MatchesFuzzy(pal.EquippedActiveSkills, skillQuery);
 
                 if (matchesName && matchesIv && matchesPassive && matchesSkill)
                     FilteredPals.Add(pal);
             }
+        }
+
+        private static bool MatchesFuzzy(string source, string query)
+        {
+            if (string.IsNullOrEmpty(source)) return false;
+            return source.ToLower().Contains(query);
         }
 
         partial void OnSelectedLocaleChanged(TranslationLocale value)
@@ -310,6 +305,13 @@ namespace PalSearch.UI.ViewModel
         public string Coordinates { get; set; }
         public string ContainerType { get; set; }
         public int SlotIndex { get; set; }
+
+        public string LocationTooltip =>
+            $"Container: {ContainerName}\n" +
+            $"Type: {ContainerType}\n" +
+            $"Slot: {SlotIndex}\n" +
+            $"Base: {BaseName}\n" +
+            $"Coords: {Coordinates}";
     }
 
     public class PalViewModel
@@ -330,14 +332,18 @@ namespace PalSearch.UI.ViewModel
         public int LocationIndex { get; set; }
         public string OwnerName { get; set; }
         public string ContainerId { get; set; }
-    }
+        public PalDisplayCoord DisplayCoord { get; set; }
 
-    public class MapMarkerViewModel
-    {
-        public string Name { get; set; }
-        public double X { get; set; }
-        public double Y { get; set; }
-        public double Z { get; set; }
-        public string MarkerType { get; set; }
+        public string LocationTooltip
+        {
+            get
+            {
+                var coordStr = DisplayCoord?.ToString() ?? $"Index {LocationIndex}";
+                return $"Location: {LocationType}\n" +
+                       $"Owner: {OwnerName}\n" +
+                       $"Position: {coordStr}\n" +
+                       $"Container: {ContainerId}";
+            }
+        }
     }
 }
